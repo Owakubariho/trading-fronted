@@ -1,0 +1,32 @@
+import React from 'react';
+
+const Modal = ({ isOpen, onClose, children }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden outline-none focus:outline-none bg-black bg-opacity-50 backdrop-blur-sm">
+            <div className="relative w-full h-full mx-auto my-0">
+                {/*content*/}
+                <div className="relative flex flex-col w-full h-full bg-white border-0 shadow-lg outline-none focus:outline-none dark:bg-gray-800">
+                    {/*header*/}
+                    <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t dark:border-gray-600">
+                        <button
+                            onClick={onClose}
+                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white focus:outline-none z-50"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    {/*body*/}
+                    <div className="relative p-0 flex-1 w-full overflow-hidden">
+                        {children}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Modal;

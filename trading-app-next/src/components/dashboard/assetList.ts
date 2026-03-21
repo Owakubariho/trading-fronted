@@ -1,0 +1,22 @@
+export const ASSETS = [
+  { label: "AUD (Australian Dollar)", value: "AUSTRALIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "Euro FX", value: "EURO FX - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "NASDAQ-100", value: "NASDAQ-100 Consolidated - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "DJIA", value: "DJIA Consolidated - CHICAGO BOARD OF TRADE" },
+  { label: "VIX Futures", value: "VIX FUTURES - CBOE FUTURES EXCHANGE" },
+  { label: "10Y Treasury Note", value: "UST 10Y NOTE - CHICAGO BOARD OF TRADE" },
+  { label: "Russell E-Mini", value: "RUSSELL E-MINI - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "Natural Gas", value: "NAT GAS ICE LD1 - ICE FUTURES ENERGY DIV" },
+  { label: "Palladium", value: "PALLADIUM - NEW YORK MERCANTILE EXCHANGE" },
+  { label: "NZD (New Zealand Dollar)", value: "NZ DOLLAR - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "Swiss Franc", value: "SWISS FRANC - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "GBP (British Pound)", value: "BRITISH POUND - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "JPY (Japanese Yen)", value: "JAPANESE YEN - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "CAD (Canadian Dollar)", value: "CANADIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "USD Index", value: "USD INDEX - ICE FUTURES U.S." },
+  { label: "Gold", value: "GOLD - COMMODITY EXCHANGE INC." },
+  { label: "Bitcoin", value: "BITCOIN - CHICAGO MERCANTILE EXCHANGE" },
+  { label: "WTI Crude Oil", value: "WTI FINANCIAL CRUDE OIL - NEW YORK MERCANTILE EXCHANGE" },
+  { label: "Copper", value: "COPPER- #1 - COMMODITY EXCHANGE INC." },
+  { label: "Silver", value: "SILVER - COMMODITY EXCHANGE INC." }
+];

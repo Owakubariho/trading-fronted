@@ -1,0 +1,725 @@
+import React, { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
+import { Chart } from "react-chartjs-2";
+import { Chart as ChartJS, registerables } from "chart.js";
+import annotationPlugin from "chartjs-plugin-annotation";
+
+// Register ChartJS components
+ChartJS.register(...registerables, annotationPlugin);
+
+// Helper function to calculate normal distribution
+const normalDistribution = (x, mean, stdDev) => {
+  return (
+    (1 / (stdDev * Math.sqrt(2 * Math.PI))) *
+    Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2))
+  );
+};
+
+const Minervini = () => {
+  const [rows, setRows] = useState([]);
+  const [accountSize, setAccountSize] = useState(100);
+  const [showTradeTable, setShowTradeTable] = useState(true);
+  const [showMonthlyTracker, setShowMonthlyTracker] = useState(false);
+  const [showBellCurve, setShowBellCurve] = useState(false);
+
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedData = localStorage.getItem("minerviniData");
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      setRows(parsedData.rows || []);
+      setAccountSize(parsedData.accountSize || 100);
+    }
+  }, []);
+
+  // Save data to localStorage whenever rows or accountSize changes
+  useEffect(() => {
+    if (rows.length > 0) {
+      localStorage.setItem(
+        "minerviniData",
+        JSON.stringify({
+          rows,
+          accountSize,
+        })
+      );
+    }
+  }, [rows, accountSize]);
+
+  const calculateHoldingDays = (entry, exit) => {
+    const entryDate = new Date(entry);
+    const exitDate = new Date(exit);
+    const diffTime = Math.abs(exitDate - entryDate);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      let tempAccountSize = accountSize;
+      const newRows = jsonData.map((row) => {
+        const profitLossNum = Math.round(
+          parseFloat(row["Profits/Losses"] || row["profitLoss"] || 0)
+        );
+        const entryRaw = row["Entry Date"] || row["entryDate"];
+        const exitRaw = row["Exit Date"] || row["exitDate"];
+
+        const formatDate = (val) => {
+          if (!val) return "";
+          if (typeof val === "number") {
+            const jsDate = new Date(Math.round((val - 25569) * 86400 * 1000));
+            return jsDate.toISOString().slice(0, 10);
+          }
+          const d = new Date(val);
+          if (!isNaN(d)) return d.toISOString().slice(0, 10);
+          return val;
+        };
+
+        const entryDate = formatDate(entryRaw);
+        const exitDate = formatDate(exitRaw);
+        const currentAccountSize = tempAccountSize + profitLossNum;
+        const avgGainLoss =
+          ((currentAccountSize - tempAccountSize) / tempAccountSize) * 100;
+        const holdingDays = calculateHoldingDays(entryDate, exitDate);
+
+        const newRow = {
+          profitLoss: profitLossNum,
+          currentAccountSize: currentAccountSize.toFixed(2),
+          avgGainLoss: avgGainLoss.toFixed(2),
+          entryDate: entryDate,
+          exitDate: exitDate,
+          symbol: row["Symbol"] || row["symbol"],
+          lotsize: row["Lotsize"] || row["lotsize"],
+          riskAmount: row["Risk Amount"] || row["riskAmount"],
+          holdingDays: holdingDays,
+        };
+        tempAccountSize = currentAccountSize;
+        return newRow;
+      });
+      setRows(newRows);
+      setAccountSize(tempAccountSize);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleAccountSizeChange = (e) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value)) {
+      setAccountSize(value);
+    }
+  };
+
+  const generateBellCurveData = () => {
+    if (rows.length === 0) return [];
+
+    return rows
+      .map((row) => {
+        const value = parseFloat(row.avgGainLoss) || 0;
+        return {
+          value,
+          type: value >= 0 ? "Gain" : "Loss",
+        };
+      })
+      .filter((item) => !isNaN(item.value));
+  };
+
+  const calculateHistogramData = () => {
+    const bins = Array(41).fill(0); // -20% to +20% (41 bins)
+
+    generateBellCurveData().forEach((trade) => {
+      const roundedValue = Math.round(trade.value);
+      const boundedValue = Math.max(-20, Math.min(20, roundedValue));
+      const binIndex = boundedValue + 20;
+
+      if (binIndex >= 0 && binIndex < bins.length) {
+        bins[binIndex]++;
+      }
+    });
+
+    return bins;
+  };
+
+  const calculateCurveData = () => {
+    const values = generateBellCurveData().map((item) => item.value);
+    if (values.length === 0) return Array(41).fill(0);
+
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const stdDev = Math.sqrt(
+      values.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / values.length
+    );
+
+    const curvePoints = [];
+    for (let i = -20; i <= 20; i++) {
+      curvePoints.push(
+        normalDistribution(i, mean, stdDev) * 100 * values.length
+      );
+    }
+
+    return curvePoints;
+  };
+
+  const generateMonthlyData = () => {
+    const monthNames = [
+      "JAN",
+      "FEB",
+      "MAR",
+      "APR",
+      "MAY",
+      "JUN",
+      "JUL",
+      "AUG",
+      "SEP",
+      "OCT",
+      "NOV",
+      "DEC",
+    ];
+    const monthlyGroups = {};
+
+    rows.forEach((row) => {
+      if (!row.exitDate) return;
+
+      const exitDate = new Date(row.exitDate);
+      const month = exitDate.getMonth();
+      const monthKey = monthNames[month];
+
+      if (!monthlyGroups[monthKey]) {
+        monthlyGroups[monthKey] = [];
+      }
+      monthlyGroups[monthKey].push(row);
+    });
+
+    const monthlyData = [];
+
+    Object.keys(monthlyGroups).forEach((month) => {
+      const monthTrades = monthlyGroups[month];
+      const winningTrades = monthTrades.filter(
+        (t) => parseFloat(t.profitLoss) > 0
+      );
+      const losingTrades = monthTrades.filter(
+        (t) => parseFloat(t.profitLoss) < 0
+      );
+
+      const avgGain =
+        winningTrades.length > 0
+          ? (
+              winningTrades.reduce(
+                (sum, t) => sum + parseFloat(t.avgGainLoss),
+                0
+              ) / winningTrades.length
+            ).toFixed(2)
+          : 0;
+
+      const avgLoss =
+        losingTrades.length > 0
+          ? (
+              losingTrades.reduce(
+                (sum, t) => sum + Math.abs(parseFloat(t.avgGainLoss)),
+                0
+              ) / losingTrades.length
+            ).toFixed(2)
+          : 0;
+
+      const lgGain =
+        winningTrades.length > 0
+          ? Math.max(
+              ...winningTrades.map((t) => parseFloat(t.avgGainLoss))
+            ).toFixed(2)
+          : 0;
+
+      const lgLoss =
+        losingTrades.length > 0
+          ? Math.max(
+              ...losingTrades.map((t) => Math.abs(parseFloat(t.avgGainLoss)))
+            ).toFixed(2)
+          : 0;
+
+      const avgDaysGain =
+        winningTrades.length > 0
+          ? (
+              winningTrades.reduce(
+                (sum, t) => sum + parseInt(t.holdingDays),
+                0
+              ) / winningTrades.length
+            ).toFixed(0)
+          : 0;
+
+      const avgDaysLoss =
+        losingTrades.length > 0
+          ? (
+              losingTrades.reduce(
+                (sum, t) => sum + parseInt(t.holdingDays),
+                0
+              ) / losingTrades.length
+            ).toFixed(0)
+          : 0;
+
+      monthlyData.push({
+        month,
+        avgGain,
+        avgLoss,
+        totalTrades: monthTrades.length,
+        lgGain,
+        lgLoss,
+        avgDaysGain,
+        avgDaysLoss,
+      });
+    });
+
+    return monthlyData;
+  };
+
+  const calculatePerformanceMetrics = () => {
+    if (rows.length === 0)
+      return {
+        avgGain: 0,
+        avgLoss: 0,
+        winLossRatio: 0,
+        expectancy: 0,
+        winningPercentage: 0,
+        losingPercentage: 0,
+      };
+
+    const winningTrades = rows.filter((t) => parseFloat(t.profitLoss) > 0);
+    const losingTrades = rows.filter((t) => parseFloat(t.profitLoss) < 0);
+
+    const avgGain =
+      winningTrades.length > 0
+        ? (
+            winningTrades.reduce(
+              (sum, t) => sum + parseFloat(t.avgGainLoss),
+              0
+            ) / winningTrades.length
+          ).toFixed(2)
+        : 0;
+
+    const avgLoss =
+      losingTrades.length > 0
+        ? (
+            losingTrades.reduce(
+              (sum, t) => sum + Math.abs(parseFloat(t.avgGainLoss)),
+              0
+            ) / losingTrades.length
+          ).toFixed(2)
+        : 0;
+
+    const winningPercentage = (
+      (winningTrades.length / rows.length) *
+      100
+    ).toFixed(2);
+    const losingPercentage = (
+      (losingTrades.length / rows.length) *
+      100
+    ).toFixed(2);
+
+    const winLossRatio =
+      parseFloat(avgLoss) !== 0
+        ? (parseFloat(avgGain) / parseFloat(avgLoss)).toFixed(2)
+        : 0;
+
+    const expectancy =
+      parseFloat(losingPercentage) !== 0
+        ? (
+            (parseFloat(winningPercentage) * parseFloat(avgGain)) /
+            (parseFloat(losingPercentage) * parseFloat(avgLoss))
+          ).toFixed(2)
+        : 0;
+
+    return {
+      avgGain,
+      avgLoss,
+      winLossRatio,
+      expectancy,
+      winningPercentage,
+      losingPercentage,
+    };
+  };
+
+  const {
+    avgGain,
+    avgLoss,
+    winLossRatio,
+    expectancy,
+    winningPercentage,
+    losingPercentage,
+  } = calculatePerformanceMetrics();
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10">
+      <div className="w-full max-w-6xl bg-white rounded-xl shadow-lg p-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+          Minervini Risk Management
+        </h2>
+
+        <div className="mb-10 flex flex-col items-center">
+          <label className="mb-2 text-sm text-gray-600">
+            Upload Excel File
+          </label>
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          <div className="mt-4 w-full max-w-xs">
+            <label className="block text-sm text-gray-600 mb-1">
+              Initial Account Size ($)
+            </label>
+            <input
+              type="number"
+              value={accountSize}
+              onChange={handleAccountSizeChange}
+              className="border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {rows.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="flex flex-col items-center">
+              <div className="w-32 h-32 rounded-full bg-green-50 border-4 border-green-200 flex items-center justify-center shadow-md">
+                <div className="text-center">
+                  <span className="block text-3xl font-bold text-green-600">
+                    {avgGain}%
+                  </span>
+                  <span className="text-sm text-green-500">Avg Gain</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="w-32 h-32 rounded-full bg-red-50 border-4 border-red-200 flex items-center justify-center shadow-md">
+                <div className="text-center">
+                  <span className="block text-3xl font-bold text-red-600">
+                    {avgLoss}%
+                  </span>
+                  <span className="text-sm text-red-500">Avg Loss</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="w-32 h-32 rounded-full bg-blue-50 border-4 border-blue-200 flex items-center justify-center shadow-md">
+                <div className="text-center">
+                  <span className="block text-3xl font-bold text-blue-600">
+                    {winLossRatio}
+                  </span>
+                  <span className="text-sm text-blue-500">Win/Loss Ratio</span>
+                  <br />
+                  <span className="text-xs bg-blue-50 mt-1">
+                    {winningPercentage}% Wins
+                    <br />
+                    {losingPercentage}% Losses
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="w-32 h-32 rounded-full bg-purple-50 border-4 border-purple-200 flex items-center justify-center shadow-md">
+                <div className="text-center">
+                  <span className="block text-3xl font-bold text-purple-600">
+                    {expectancy}
+                  </span>
+                  <span className="text-sm text-purple-500">Expectancy</span>
+                  <br />
+                  <span className="text-xs text-gray-500 mt-1">
+                    PWT*AG / PLT*AL
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showBellCurve && rows.length > 0 && (
+          <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-4 text-center text-gray-700">
+              Gain/Loss Distribution with Normal Curve
+            </h3>
+            <div className="h-80">
+              <Chart
+                type="bar"
+                data={{
+                  labels: Array.from({ length: 41 }, (_, i) => i - 20),
+                  datasets: [
+                    {
+                      label: "Actual Trades",
+                      data: calculateHistogramData(),
+                      backgroundColor: (ctx) => {
+                        const label = ctx.dataIndex - 20;
+                        return label < -10
+                          ? "rgba(245, 34, 45, 0.7)"
+                          : label < 0
+                          ? "rgba(255, 169, 64, 0.7)"
+                          : "rgba(82, 196, 26, 0.7)";
+                      },
+                      borderColor: "#fff",
+                      borderWidth: 0.5,
+                      barPercentage: 1.0,
+                      categoryPercentage: 1.0,
+                    },
+                    {
+                      label: "Normal Distribution",
+                      data: calculateCurveData(),
+                      type: "line",
+                      borderColor: "#1890ff",
+                      borderWidth: 3,
+                      pointRadius: 0,
+                      fill: false,
+                      tension: 0.4,
+                      backgroundColor: "transparent",
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    x: {
+                      title: {
+                        display: true,
+                        text: "Percentage Gain/Loss",
+                        font: { weight: "bold" },
+                      },
+                      grid: { display: false },
+                    },
+                    y: {
+                      title: {
+                        display: true,
+                        text: "Number of Trades",
+                        font: { weight: "bold" },
+                      },
+                      beginAtZero: true,
+                    },
+                  },
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: "top",
+                      labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                      },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx) => {
+                          if (ctx.datasetIndex === 0) {
+                            return `${ctx.raw} trades at ${ctx.label}%`;
+                          } else {
+                            return `Normal distribution at ${ctx.label}%`;
+                          }
+                        },
+                      },
+                    },
+                    annotation: {
+                      annotations: {
+                        theWall: {
+                          type: "line",
+                          xMin: -10,
+                          xMax: -10,
+                          borderColor: "#faad14",
+                          borderWidth: 3,
+                          borderDash: [6, 6],
+                          label: {
+                            content: "THE WALL (-10%)",
+                            display: true,
+                            position: "top",
+                            backgroundColor: "rgba(250, 173, 20, 0.7)",
+                            color: "#000",
+                            font: { size: 12, weight: "bold" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-gray-700">
+                <strong>Analysis:</strong> The blue curve shows the normal
+                distribution based on your trading performance. Ideally, your
+                actual distribution (bars) should be right-skewed compared to
+                the normal curve, with more trades on the profit side (right)
+                and minimal penetration beyond "The Wall" (-10%) on the left.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-center space-x-4 mb-6">
+          <button
+            onClick={() => setShowTradeTable(!showTradeTable)}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              rows.length === 0
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg"
+            }`}
+            disabled={rows.length === 0}
+          >
+            {showTradeTable ? "Hide Trade Table" : "Show Trade Table"}
+          </button>
+
+          <button
+            onClick={() => setShowMonthlyTracker(!showMonthlyTracker)}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              rows.length === 0
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg"
+            }`}
+            disabled={rows.length === 0}
+          >
+            {showMonthlyTracker
+              ? "Hide Monthly Tracker"
+              : "Show Monthly Tracker"}
+          </button>
+
+          <button
+            onClick={() => setShowBellCurve(!showBellCurve)}
+            className={`px-4 py-2 rounded-lg transition-all ${
+              rows.length === 0
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg"
+            }`}
+            disabled={rows.length === 0}
+          >
+            {showBellCurve ? "Hide Bell Curve" : "Show Bell Curve"}
+          </button>
+        </div>
+
+        {showTradeTable && (
+          <div className="overflow-x-auto mb-8">
+            <table className="min-w-full bg-white rounded-lg shadow-lg border border-gray-200">
+              <thead>
+                <tr className="bg-blue-100 text-gray-700">
+                  <th className="py-3 px-4 text-left"># No of Trades</th>
+                  <th className="py-3 px-4 text-left">Profits/Losses</th>
+                  <th className="py-3 px-4 text-left">Current Account Size</th>
+                  <th className="py-3 px-4 text-left">Avg Gain/Loss (%)</th>
+                  <th className="py-3 px-4 text-left">Entry Date</th>
+                  <th className="py-3 px-4 text-left">Exit Date</th>
+                  <th className="py-3 px-4 text-left">Holding Days</th>
+                  <th className="py-3 px-4 text-left">Symbol</th>
+                  <th className="py-3 px-4 text-left">Lotsize</th>
+                  <th className="py-3 px-4 text-left">Risk Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="text-center py-6 text-gray-400">
+                      No entries yet.
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((row, idx) => (
+                    <tr
+                      key={idx}
+                      className="border-t border-gray-200 hover:bg-blue-50"
+                    >
+                      <td className="py-2 px-4">{idx + 1}</td>
+                      <td
+                        className={`py-2 px-4 ${
+                          parseFloat(row.profitLoss) >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {row.profitLoss}
+                      </td>
+                      <td className="py-2 px-4">{row.currentAccountSize}</td>
+                      <td
+                        className={`py-2 px-4 ${
+                          parseFloat(row.avgGainLoss) >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {row.avgGainLoss}%
+                      </td>
+                      <td className="py-2 px-4">{row.entryDate}</td>
+                      <td className="py-2 px-4">{row.exitDate}</td>
+                      <td className="py-2 px-4">{row.holdingDays}</td>
+                      <td className="py-2 px-4">{row.symbol}</td>
+                      <td className="py-2 px-4">{row.lotsize}</td>
+                      <td className="py-2 px-4">${row.riskAmount}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {showMonthlyTracker && rows.length > 0 && (
+          <div className="overflow-x-auto">
+            <h3 className="text-xl font-semibold mb-4 text-center text-gray-700">
+              Monthly Performance Tracker
+            </h3>
+            <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-300 rounded">
+              <h4 className="font-semibold text-blue-700 mb-2">
+                What do Average Gain and Average Loss mean?
+              </h4>
+              <p className="text-gray-700 mb-1">
+                <span className="font-semibold text-green-600">
+                  Average Gain
+                </span>{" "}
+                is the average percentage profit made on all winning trades.
+              </p>
+              <p className="text-gray-700">
+                <span className="font-semibold text-red-600">Average Loss</span>{" "}
+                is the average percentage loss taken on all losing trades.
+              </p>
+            </div>
+
+            <table className="min-w-full bg-white rounded-lg shadow-lg border border-gray-200">
+              <thead>
+                <tr className="bg-blue-100 text-gray-700">
+                  <th className="py-3 px-4 text-left">MONTH</th>
+                  <th className="py-3 px-4 text-left">AVG GAIN</th>
+                  <th className="py-3 px-4 text-left">AVG LOSS</th>
+                  <th className="py-3 px-4 text-left">TOTAL TRADES</th>
+                  <th className="py-3 px-4 text-left">LG GAIN</th>
+                  <th className="py-3 px-4 text-left">LG LOSS</th>
+                  <th className="py-3 px-4 text-left">AVG DAYS GAINS</th>
+                  <th className="py-3 px-4 text-left">AVG DAYS LOSS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {generateMonthlyData().map((month, index) => (
+                  <tr
+                    key={index}
+                    className="border-t border-gray-200 hover:bg-blue-50"
+                  >
+                    <td className="py-2 px-4 font-medium">{month.month}</td>
+                    <td className="py-2 px-4 text-green-600">
+                      {month.avgGain}%
+                    </td>
+                    <td className="py-2 px-4 text-red-600">{month.avgLoss}%</td>
+                    <td className="py-2 px-4">{month.totalTrades}</td>
+                    <td className="py-2 px-4 text-green-600">
+                      {month.lgGain}%
+                    </td>
+                    <td className="py-2 px-4 text-red-600">{month.lgLoss}%</td>
+                    <td className="py-2 px-4">{month.avgDaysGain}</td>
+                    <td className="py-2 px-4">{month.avgDaysLoss}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Minervini;

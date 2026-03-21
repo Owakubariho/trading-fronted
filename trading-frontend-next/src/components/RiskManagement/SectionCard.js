@@ -1,0 +1,49 @@
+import React from 'react';
+
+/**
+ * A reusable card component for methodology sections.
+ * @param {Object} props - The component props.
+ * @param {string} props.title - The heading for the section.
+ * @param {string} props.icon - A symbolic icon for the section.
+ * @param {React.ReactNode} props.children - The content of the section.
+ */
+const SectionCard = ({ title, icon, children }) => (
+    <div style={styles.card}>
+        <h3 style={styles.title}>
+            <span style={styles.icon}>{icon}</span> {title}
+        </h3>
+        <div style={styles.content}>
+            {children}
+        </div>
+    </div>
+);
+
+const styles = {
+    card: {
+        border: '1px solid #e0e0e0',
+        borderRadius: '8px',
+        padding: '20px',
+        marginBottom: '20px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+        backgroundColor: '#ffffff',
+    },
+    title: {
+        borderBottom: '2px solid #f0f0f0',
+        paddingBottom: '10px',
+        marginBottom: '15px',
+        color: '#333',
+        display: 'flex',
+        alignItems: 'center',
+    },
+    icon: {
+        fontSize: '1.2em',
+        marginRight: '10px',
+        color: '#007bff', // Highlight color
+    },
+    content: {
+        lineHeight: 1.6,
+        color: '#555',
+    }
+};
+
+export default SectionCard;

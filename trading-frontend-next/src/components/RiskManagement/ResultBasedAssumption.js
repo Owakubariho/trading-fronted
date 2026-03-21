@@ -1,0 +1,248 @@
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+export default function ResultBasedAssumption() {
+  const [form, setForm] = useState({
+    portfolioSize: 100000,
+    positionSizePct: 10,
+    desiredReturnPct: 40,
+    avgGainPct: 12,
+    winRatePct: 40,
+    avgLossPct: 6,
+  });
+
+  const [results, setResults] = useState(null);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: parseFloat(value) || 0,
+    }));
+  };
+
+  const clearAll = () => {
+    setForm({
+      portfolioSize: "",
+      positionSizePct: "",
+      desiredReturnPct: "",
+      avgGainPct: "",
+      winRatePct: "",
+      avgLossPct: "",
+    });
+    setResults(null);
+  };
+
+  const calculateResults = () => {
+    const {
+      portfolioSize,
+      positionSizePct,
+      desiredReturnPct,
+      avgGainPct,
+      winRatePct,
+      avgLossPct,
+    } = form;
+
+    // Convert percentages to decimals for calculations
+    const positionSizePctDecimal = positionSizePct / 100;
+    const avgGainPctDecimal = avgGainPct / 100;
+    const winRatePctDecimal = winRatePct / 100;
+    const avgLossPctDecimal = avgLossPct / 100;
+    const desiredReturnPctDecimal = desiredReturnPct / 100;
+
+    const positionSize$ = portfolioSize * positionSizePctDecimal;
+    const avg$Gain = positionSize$ * avgGainPctDecimal;
+    const avg$Loss = positionSize$ * avgLossPctDecimal;
+    const glRatioNonAdj =
+      avgLossPctDecimal !== 0 ? avgGainPctDecimal / avgLossPctDecimal : 0;
+
+    const expected$ReturnPerTrade =
+      winRatePctDecimal * avg$Gain - (1 - winRatePctDecimal) * avg$Loss;
+
+    const expectedNetPctReturnPerTrade =
+      positionSize$ !== 0 ? expected$ReturnPerTrade / positionSize$ : 0;
+
+    const $goal = portfolioSize * desiredReturnPctDecimal;
+    const tradesNeeded =
+      expected$ReturnPerTrade !== 0
+        ? Math.ceil($goal / expected$ReturnPerTrade)
+        : 0;
+
+    const winningTrades = Math.round(tradesNeeded * winRatePctDecimal);
+    const losingTrades = tradesNeeded - winningTrades;
+    const glRatioAdj =
+      losingTrades !== 0 ? glRatioNonAdj * (winningTrades / losingTrades) : 0;
+
+    const optimalF =
+      avgLossPctDecimal !== 0
+        ? Math.abs(
+            winRatePctDecimal - (1 - winRatePctDecimal) / avgLossPctDecimal
+          )
+        : 0;
+
+    setResults({
+      positionSize$,
+      avg$Gain,
+      avg$Loss,
+      glRatioNonAdj,
+      expected$ReturnPerTrade,
+      expectedNetPctReturnPerTrade,
+      $goal,
+      tradesNeeded,
+      winningTrades,
+      losingTrades,
+      glRatioAdj,
+      optimalF: optimalF, // Convert to percentage
+    });
+  };
+
+  return (
+    <div className="p-4 bg-white max-w-4xl mx-auto font-sans">
+      <h1 className="text-xl font-bold mb-4">
+        Result Based Assumption Forecast (RBAF)
+      </h1>
+
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Left Column - Inputs */}
+        <div className="w-full md:w-1/2">
+          <table className="w-full mb-4">
+            <tbody>
+              {[
+                { label: "Portfolio Size $:", name: "portfolioSize" },
+                { label: "Position Size %:", name: "positionSizePct" },
+                { label: "Desired % Return:", name: "desiredReturnPct" },
+                { label: "Average % Gain:", name: "avgGainPct" },
+                { label: "% of Winning Trades:", name: "winRatePct" },
+                { label: "Average % Loss:", name: "avgLossPct" },
+              ].map((field) => (
+                <tr key={field.name}>
+                  <td className="py-1 pr-2 font-medium w-1/2">{field.label}</td>
+                  <td className="py-1">
+                    <input
+                      type="number"
+                      name={field.name}
+                      value={form[field.name]}
+                      onChange={handleChange}
+                      className="w-full p-1 border border-gray-300"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={clearAll}
+              className="flex-1 py-1 px-4 bg-gray-200 hover:bg-gray-300 border border-gray-300"
+            >
+              Clear All
+            </button>
+            <button
+              onClick={calculateResults}
+              className="flex-1 py-1 px-4 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700"
+            >
+              Calculate
+            </button>
+          </div>
+        </div>
+
+        {/* Right Column - Results */}
+        <AnimatePresence>
+          {results && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="w-full md:w-1/2 bg-[#dffede] p-4"
+            >
+              <div className="space-y-2">
+                <div className="flex">
+                  <span className="font-medium w-3/5">
+                    Average $ Gain on Winning Trades:
+                  </span>
+                  <span>${results.avg$Gain.toFixed(2)}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-medium w-3/5">
+                    # of Winning Trades:
+                  </span>
+                  <span>{results.winningTrades}</span>
+                </div>
+
+                <div className="border-t border-gray-300 pt-2"></div>
+
+                <div className="flex">
+                  <span className="font-medium w-3/5">
+                    Average $ Loss on Losing Trades:
+                  </span>
+                  <span>${results.avg$Loss.toFixed(2)}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-medium w-3/5"># of Losing Trades:</span>
+                  <span>{results.losingTrades}</span>
+                </div>
+
+                <div className="border-t border-gray-300 pt-2"></div>
+
+                <div className="flex">
+                  <span className="font-medium w-3/5">
+                    Gain/Loss Ratio (Non-Adjusted):
+                  </span>
+                  <span>{results.glRatioNonAdj.toFixed(2)}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-medium w-3/5">$ Position Size:</span>
+                  <span>${results.positionSize$.toFixed(2)}</span>
+                </div>
+
+                <div className="border-t border-gray-300 pt-2"></div>
+
+                <div className="flex">
+                  <span className="font-medium w-3/5">
+                    Expected Net % Return per Trade:
+                  </span>
+                  <span>
+                    {(results.expectedNetPctReturnPerTrade * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="font-medium w-3/5">
+                    Expected $ Return per Trade:
+                  </span>
+                  <span>${results.expected$ReturnPerTrade.toFixed(2)}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-medium w-3/5">$ Goal:</span>
+                  <span>${results.$goal.toFixed(2)}</span>
+                </div>
+
+                <div className="border-t border-gray-300 pt-2"></div>
+
+                <div className="flex">
+                  <span className="font-medium w-3/5">
+                    Number of Trades Needed to Reach Goal:
+                  </span>
+                  <span>{results.tradesNeeded}</span>
+                </div>
+
+                <div className="border-t border-gray-300 pt-2"></div>
+
+                <div className="flex">
+                  <span className="font-medium w-3/5">
+                    Gain/Loss Ratio (Adjusted):
+                  </span>
+                  <span>{results.glRatioAdj.toFixed(2)}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-medium w-3/5">Optimal f:</span>
+                  <span>{results.optimalF.toFixed(0)}</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}

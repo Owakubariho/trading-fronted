@@ -1,0 +1,59 @@
+import React from 'react';
+
+/**
+ * Renders a simple, clean table for displaying structured data.
+ * @param {Object} props - The component props.
+ * @param {string[]} props.headers - Array of strings for the table headers.
+ * @param {Array<string[]>} props.data - Array of arrays for the table rows.
+ */
+const Table = ({ headers, data }) => (
+    <table style={styles.table}>
+        <thead style={styles.thead}>
+            <tr>
+                {headers.map((header, index) => (
+                    <th key={index} style={styles.th}>{header}</th>
+                ))}
+            </tr>
+        </thead>
+        <tbody>
+            {data.map((row, rowIndex) => (
+                <tr key={rowIndex} style={rowIndex % 2 === 0 ? styles.trEven : styles.trOdd}>
+                    {row.map((cell, cellIndex) => (
+                        <td key={cellIndex} style={styles.td}>{cell}</td>
+                    ))}
+                </tr>
+            ))}
+        </tbody>
+    </table>
+);
+
+// Minimal inline styling for professionalism and clarity
+const styles = {
+    table: {
+        width: '100%',
+        borderCollapse: 'collapse',
+        margin: '15px 0',
+        fontSize: '0.9em',
+    },
+    thead: {
+        backgroundColor: '#333',
+        color: '#fff',
+        textAlign: 'left',
+    },
+    th: {
+        padding: '12px 15px',
+        borderBottom: '2px solid #ddd',
+    },
+    td: {
+        padding: '12px 15px',
+        borderBottom: '1px solid #eee',
+    },
+    trEven: {
+        backgroundColor: '#f9f9f9',
+    },
+    trOdd: {
+        backgroundColor: '#ffffff',
+    }
+};
+
+export default Table;

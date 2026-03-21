@@ -1,0 +1,39 @@
+import React from 'react';
+import TradingViewChart from './TradingViewChart';
+
+const StockChartModal = ({ ticker, onClose }) => {
+    if (!ticker) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm">
+            {/* Container with margins */}
+            <div className="relative w-[95%] h-[90%] bg-white dark:bg-slate-800 rounded-lg shadow-2xl overflow-hidden flex flex-col transition-colors duration-300">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                        {ticker} Chart
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition-colors rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 focus:outline-none"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Body - Flex 1 to fill remaining height */}
+                <div className="flex-1 relative w-full bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100">
+                    <TradingViewChart
+                        symbol={ticker}
+                        theme="dark" // Passing theme prop down if supported, or handled by context
+                    />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default StockChartModal;

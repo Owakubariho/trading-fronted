@@ -1,0 +1,70 @@
+import React, { useEffect, useRef, memo } from 'react';
+
+function TradingViewChart({ symbol }) {
+    const container = useRef();
+
+    useEffect(
+        () => {
+            if (container.current) {
+                container.current.innerHTML = ''; // Clear previous widget
+            }
+
+            const script = document.createElement("script");
+            script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+            script.type = "text/javascript";
+            script.async = true;
+            script.innerHTML = `
+        {
+          "allow_symbol_change": true,
+          "calendar": false,
+          "details": false,
+          "hide_side_toolbar": true,
+          "hide_top_toolbar": false,
+          "hide_legend": false,
+          "hide_volume": false,
+          "hotlist": false,
+          "interval": "D",
+          "locale": "en",
+          "save_image": true,
+          "style": "1",
+          "symbol": "${symbol || "NASDAQ:AAPL"}",
+          "theme": "light",
+          "timezone": "Etc/UTC",
+          "backgroundColor": "#ffffff",
+          "gridColor": "rgba(46, 46, 46, 0.06)",
+          "watchlist": [],
+          "withdateranges": false,
+          "compareSymbols": [],
+          "studies": [],
+          "autosize": true
+        }`;
+
+            // Re-create the structure expected by the script if needed, or just append to container
+            // The user's code appends script to container. 
+            // But we also need the widget div inside.
+
+            const widgetDiv = document.createElement("div");
+            widgetDiv.className = "tradingview-widget-container__widget";
+            widgetDiv.style.height = "calc(100% - 32px)";
+            widgetDiv.style.width = "100%";
+
+            const copyrightDiv = document.createElement("div");
+            copyrightDiv.className = "tradingview-widget-copyright";
+            copyrightDiv.innerHTML = `<a href="https://www.tradingview.com/symbols/${symbol || "NASDAQ:AAPL"}/" rel="noopener nofollow" target="_blank"><span className="blue-text">${symbol || "AAPL"} stock chart</span></a><span className="trademark"> by TradingView</span>`;
+
+            if (container.current) {
+                container.current.appendChild(widgetDiv);
+                container.current.appendChild(copyrightDiv);
+                container.current.appendChild(script);
+            }
+        },
+        [symbol]
+    );
+
+    return (
+        <div className="tradingview-widget-container" ref={container} style={{ height: "100%", width: "100%" }}>
+        </div>
+    );
+}
+
+export default memo(TradingViewChart);
