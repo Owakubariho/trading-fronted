@@ -14,7 +14,7 @@ import ExnessMomentumremainder from './pages/stockscreens/ExnessMomentumremainde
 import Form from './currency/Form';
 import Pagenotfound from './pages/Pagenotfound';
 import TradingViewWidget1 from './pages/TradingViewWidget1';
-
+import Time from './currency/Time';
 // stock screens
 import Exnesstrength1 from './pages/stockscreens/Exnesstrength1';
 import Exnesstrength2 from './pages/stockscreens/Exnesstrength2';
@@ -101,14 +101,35 @@ import Pa3 from './pages/cot/cot_chart2/Pa3';
 import Silver3 from './pages/cot/cot_chart2/Silver3';
 import Xaud3 from './pages/cot/cot_chart2/Xaud3';
 import Market from './components/methodology/Market';
+import Matt from './components/methodology/Matt';
+import Analysis from './components/methodology/Analysis';
+import Lesson1 from './components/methodology/Lesson1';
+import MindBlowingMath from './components/methodology/MindBlowingMath';
+import TradingRoutine from './components/methodology/TradingRoutine';
+import Nzddata from './currency/currencymacro/Nzd';
+import  UsdData from './currency/currencymacro/Usd';
 
+// currency analysis
+import Daily1 from './components/methodology/currencyanalysis/upload/currencycharts/Daily1';
+    import Four1 from './components/methodology/currencyanalysis/upload/currencycharts/Four1';
+    import Hourly from './components/methodology/currencyanalysis/upload/currencycharts/Hourly';
+    import Weekly from './components/methodology/currencyanalysis/upload/currencycharts/Weekly';
+    import Overall1 from './components/methodology/currencyanalysis/upload/Main';
+    import Overall2 from './components/methodology/stock analysis/uploaddata/Overall2';
+    // stock analysis
+    import AnalysisWeekly from './components/methodology/stock analysis/WeeklyAnalysis';
+    import AnalysisDaily from './components/methodology/stock analysis/AnalysisDaily'
+    import AnalysisHourly from './components/methodology/stock analysis/AnalysisHourly'
+import Main from './components/methodology/currencyanalysis/upload/Main';
 
+    
+   
 const App = () => {
   const stocksLinks = [
-    { label: "ExnessMomentum", to: "/stock1" },
+    { label: "ExnessMomentum", to: "/stock11" },
     { label: "Tradingview screens", to: "/stock1e" },
     { label: "ExnessMomentumremainder", to: "/stock2" },
-    { label: "exness_1 month RS", to: "/stock3" },
+    { label: "exness_1 month RS", to: "/stock333" },
     { label: "exness_3 month RS", to: "/stock4" },
     { label: "exness_6 month RS", to: "/stock5" },
     // sp500
@@ -207,7 +228,36 @@ const App = () => {
     
     { label: "Xaud", to: "/cot43d" },
     
+  //  stock analysis
+
    
+  ];
+  const stockanalysis = [
+   
+    { label: "Week", to: "/stock1" },
+    { label: "Daily", to: "/stock222" },
+    { label: "Hourly", to: "/stock3" },
+
+
+   
+    
+  //  stock analysis
+  
+   
+  ];
+  const currencyanalysis = [
+   
+    { label: "Week", to: "/currency*1" },
+    { label: "Daily", to: "/currency*2" },
+    { label: "Hourly(4)", to: "/currency*3" },
+    { label: "Hourly(1)", to: "/currency*4" },
+   
+
+
+   
+    
+  //  stock analysis
+  
    
   ];
 
@@ -217,7 +267,7 @@ const App = () => {
   <Navbar />
   <div className="flex flex-grow pt-16">
     {/* Left-side navigation */}
-    <div className="w-1/4 bg-gray-200 p-4">
+    <div className="w-2/5 bg-gray-200 p-4">
     <h2 className="text-lg font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text">
   Detailed Analysis
 </h2>
@@ -228,6 +278,10 @@ const App = () => {
       <Dropdown label="Commitment of traders(specComm diffcharts)" links={cotchartSpeccommdiff} />
       <Dropdown label="Commitment of traders(index charts)" links={cotindex} />
       <Dropdown label="Commitment of traders(line-charts)" links={cotchartline} />
+
+
+      <Dropdown label="stock analysis" links={stockanalysis} />
+      <Dropdown label="currency analysis" links={currencyanalysis} />
 
 
 
@@ -243,8 +297,16 @@ const App = () => {
         <Route path="/currencytracker" element={<ForexTracker/>} />
         <Route path="/currencytable" element={<Currencytable/>} />
         <Route path="/fundermental" element={<Earnings/>} />
-
-
+       
+{/* currecy analysis */}
+        <Route path="/currency*1" element={<Weekly/>} />
+        <Route path="/currency*2" element={<Daily1/>} />
+        <Route path="/currency*3" element={<Four1/>} />
+        <Route path="/currency*4" element={<Hourly/>} />
+{/* stock analysis */}
+        <Route path="/stock1" element={<AnalysisWeekly/>} />
+        <Route path="/stock222" element={<AnalysisDaily/>} />
+        <Route path="/stock3" element={<AnalysisHourly/>} />
 {/* cot index */}
         <Route path="/cot1e" element={<Cotindex13 />} />
         <Route path="/cot2e" element={<Cotindex26 />} />
@@ -257,10 +319,10 @@ const App = () => {
 
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/stock1" element={<ExnessMomentum/>} />
+        <Route path="/stock11" element={<ExnessMomentum/>} />
         <Route path="/stock2" element={<ExnessMomentumremainder/>} />
         <Route path="/stock1e" element={<TradingViewWidget1/>} />
-        <Route path="/stock3" element={< Exnesstrength1/>} />
+        <Route path="/stock333" element={< Exnesstrength1/>} />
         <Route path="/stock4" element={<Exnesstrength2/>} />
         <Route path="/stock5" element={<Exnesstrength3/>} />
         <Route path="/stock2t" element={<Minerviniexness/>} />
@@ -345,6 +407,20 @@ const App = () => {
 {/* methodologies and strategies */}
 <Route path="/currency-1" element={<Currency/>} />
 <Route path="/currency-2" element={<Market/>} />
+<Route path="/currency-3" element={<Time/>} />
+<Route path="/currency-4" element={<Matt/>} />
+<Route path="/analysis" element={<Analysis/>} />
+<Route path="/lesson" element={<  Lesson1/>} />
+<Route path="/math" element={<MindBlowingMath/>} />
+<Route path="/routine" element={<TradingRoutine/>} />
+<Route path="/aud32" element={<Nzddata/>} />
+<Route path="/aud34" element={<UsdData/>} />
+{/* analysis */}
+<Route path="/currency-45" element={<Main/>} />
+<Route path="/currency-55" element={<Overall2/>} />
+
+
+
 
 
 

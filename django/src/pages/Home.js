@@ -5,8 +5,7 @@ import TradingViewWidget from './TradingViewWidget';
 function Home() {
   return (
     <div className="p-8 bg-gray-200 min-h-screen">
- <Link to="/currency-1" className="text-white hover:underline">Methodologies & strategies</Link>
- <Link to="/currency-2" className="text-white hover:underline">lessons</Link>
+ 
 
       <div className="max-w-6xl mx-auto">
 

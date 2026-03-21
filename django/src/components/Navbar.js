@@ -30,6 +30,8 @@ const Navbar = () => {
         <li>
           <Link to="/analysis" className="text-white hover:underline">  Extreme Analysis</Link>
         </li>
+       
+        
 
         </ul>
         <div className="flex items-center space-x-4">

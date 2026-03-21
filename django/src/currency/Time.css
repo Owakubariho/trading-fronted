@@ -1,0 +1,49 @@
+.time-container {
+  padding: 20px;
+  background-color: #f0f4f8;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.time-box, .market-status-box, .session-box {
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.subtitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+.time {
+  font-size: 18px;
+  color: #000;
+}
+
+.session-box.open {
+  border-color: #4caf50;
+}
+
+.session-box.closed {
+  border-color: #f44336;
+}
+
+.session-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #007bff;
+  margin-bottom: 8px;
+}

@@ -72,8 +72,8 @@ function Currencymeterchart() {
                   {
                     label: "Gbp",
                     data: currencies.map((data) => data.Gbp),
-                    backgroundColor: 'rgba(0, 0, 255, 0.7)',
-                    borderColor: 'rgba(0, 0, 255, 0.7)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    borderColor: 'rgba(0, 0, 0, 0.7)',
                   },
                   {
                     label: "Chf",
