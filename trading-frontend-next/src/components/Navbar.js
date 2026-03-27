@@ -1,9 +1,9 @@
 "use client";
-import React, { useContext } from 'react';
-import Link from 'next/link';
-import { useTheme } from '../context/ThemeContext';
-import AuthContext from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import React, { useContext } from "react";
+import Link from "next/link";
+import { useTheme } from "../context/ThemeContext";
+import AuthContext from "../context/AuthContext";
+import { motion } from "framer-motion";
 
 const Navbar = () => {
   const { darkMode, toggleDarkMode } = useTheme();
@@ -14,7 +14,7 @@ const Navbar = () => {
       <div className="flex items-center justify-between px-6 py-3">
         {/* Logo / Title area */}
         <div className="flex items-center space-x-6">
-          <Link to="/" className="flex flex-col leading-tight group">
+          <Link href="/" className="flex flex-col leading-tight group">
             <motion.h1
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -35,10 +35,20 @@ const Navbar = () => {
           {/* Main Navigation - Only show if logged in or public links */}
           <ul className="hidden md:flex items-center space-x-6">
             <li>
-              <Link to="/" className="text-sm font-medium text-white/90 hover:text-white transition-colors hover:scale-105 transform duration-200">Home</Link>
+              <Link
+                to="/"
+                className="text-sm font-medium text-white/90 hover:text-white transition-colors hover:scale-105 transform duration-200"
+              >
+                Home
+              </Link>
             </li>
             <li>
-              <Link to="/about" className="text-sm font-medium text-white/90 hover:text-white transition-colors hover:scale-105 transform duration-200">About</Link>
+              <Link
+                to="/about"
+                className="text-sm font-medium text-white/90 hover:text-white transition-colors hover:scale-105 transform duration-200"
+              >
+                About
+              </Link>
             </li>
           </ul>
         </div>
@@ -47,8 +57,18 @@ const Navbar = () => {
         <div className="flex items-center space-x-6">
           {user ? (
             <div className="hidden lg:flex items-center space-x-6">
-              <Link to="/currency" className="text-xs font-medium text-blue-50 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors">Currency meter</Link>
-              <Link to="/currencytracker" className="text-xs font-medium text-blue-50 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors">Time trackerFx</Link>
+              <Link
+                to="/currency"
+                className="text-xs font-medium text-blue-50 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors"
+              >
+                Currency meter
+              </Link>
+              <Link
+                to="/currencytracker"
+                className="text-xs font-medium text-blue-50 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors"
+              >
+                Time trackerFx
+              </Link>
               <button
                 onClick={logoutUser}
                 className="text-xs font-bold bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5"
@@ -58,8 +78,18 @@ const Navbar = () => {
             </div>
           ) : (
             <div className="hidden lg:flex items-center space-x-4">
-              <Link to="/login" className="text-sm font-medium text-white hover:text-blue-100 transition-colors">Login</Link>
-              <Link to="/signup" className="text-sm font-bold bg-white text-blue-600 px-4 py-2 rounded-full shadow-md hover:bg-blue-50 transition-all duration-300 transform hover:-translate-y-0.5">Sign Up</Link>
+              <Link
+                to="/login"
+                className="text-sm font-medium text-white hover:text-blue-100 transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="text-sm font-bold bg-white text-blue-600 px-4 py-2 rounded-full shadow-md hover:bg-blue-50 transition-all duration-300 transform hover:-translate-y-0.5"
+              >
+                Sign Up
+              </Link>
             </div>
           )}
 
@@ -70,7 +100,16 @@ const Navbar = () => {
             aria-label="Toggle Dark Mode"
           >
             {darkMode ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-yellow-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <circle cx="12" cy="12" r="5" />
                 <line x1="12" y1="1" x2="12" y2="3" />
                 <line x1="12" y1="21" x2="12" y2="23" />
@@ -82,7 +121,16 @@ const Navbar = () => {
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
               </svg>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-white"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
               </svg>
             )}
